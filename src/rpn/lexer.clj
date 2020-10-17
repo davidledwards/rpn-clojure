@@ -17,13 +17,13 @@
   (:require [clojure.string :as string])
   (:require [rpn.token :as token]))
 
-(def ^:private digits
-  (set (map char (range (int \0) (int \9)))))
+(def digits
+  (set (map char (range (int \0) (inc (int \9))))))
 
-(def ^:private letters
-  (set (map char (concat (range (int \A) (int \Z)) (range (int \a) (int \z))))))
+(def letters
+  (set (map char (concat (range (int \A) (inc (int \Z))) (range (int \a) (inc (int \z)))))))
 
-(def ^:private whitespace
+(def whitespace
   #{\space \newline \tab \return \formfeed})
 
 (defn- read-number [in lexeme]
@@ -67,6 +67,6 @@
 (defn lexer [in]
   (lazy-seq
     (let [[t in-rest] (tokenize in)]
-      (if (= t token/EOS-token)
+      (if (token/EOS-token? t)
         nil
         (cons t (lexer in-rest))))))

@@ -13,12 +13,23 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 ;;;
-(ns rpn.compiler)
+(ns rpn.compiler
+  (:require [rpn.input :as input])
+  (:require [rpn.lexer :as lexer])
+  (:require [rpn.parser :as parser])
+  (:require [rpn.ast :as ast]))
 
-(defn compiler [] nil)
+(defn compiler [& args]
+  (let [in "ZQ min Tu - ( EE min 0.39 * wi - ( ZU + ( 0.44 + ( ( ( OK ) - 0.51 - 0.21 ) ) ) - ( YV ) / ( ( rP ) min ( ( ( Pz ) - ( Ku * fF ^ ( yO ) % 0.46 ) + 0.89 - RW ) ) max 0.80 ) ) ) "
+        lex (lexer/lexer in)
+        p (parser/parser lex)]
+    (prn in)
+    (prn lex)
+    (prn p)
+    (print (ast/format-AST p))))
 
 (defn -main [& args]
   (try
-    (compiler)
+    (compiler args)
     (catch Exception e
-      (println (.getMessage e)))))
+      (println e))))
