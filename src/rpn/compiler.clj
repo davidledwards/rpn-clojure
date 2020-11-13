@@ -17,16 +17,24 @@
   (:require [rpn.input :as input])
   (:require [rpn.lexer :as lexer])
   (:require [rpn.parser :as parser])
-  (:require [rpn.ast :as ast]))
+  (:require [rpn.ast :as ast])
+  (:require [rpn.generator :as generator])
+  (:require [rpn.emitter :as emitter])
+  (:require [clojure.string :as string]))
 
 (defn compiler [& args]
   (let [in "ZQ min Tu - ( EE min 0.39 * wi - ( ZU + ( 0.44 + ( ( ( OK ) - 0.51 - 0.21 ) ) ) - ( YV ) / ( ( rP ) min ( ( ( Pz ) - ( Ku * fF ^ ( yO ) % 0.46 ) + 0.89 - RW ) ) max 0.80 ) ) ) "
         lex (lexer/lexer in)
-        p (parser/parser lex)]
+        p (parser/parser lex)
+        gen (generator/generator p)
+        e (emitter/emitter gen)]
     (prn in)
     (prn lex)
     (prn p)
-    (print (ast/format-AST p))))
+    (print (ast/format-AST p))
+    (prn gen)
+    (prn e)
+    (println (string/join (map #(str % \newline) e)))))
 
 (defn -main [& args]
   (try

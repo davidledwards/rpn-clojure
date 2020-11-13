@@ -45,10 +45,10 @@
 
 (defn- match [in token]
   (let [t (first in)]
-    (if (= (token/type-of t) (token/type-of token))
+    (if (token/same-kind? t token)
       (rest in)
-      (let [lexeme (token/lexeme-of (or t token/EOS-token))]
-        (throw (Exception. (str lexeme ": expecting '" (token/lexeme-of token) "'")))))))
+      (let [lexeme (token/lexeme (or t token/EOS-token))]
+        (throw (Exception. (str lexeme ": expecting '" (token/lexeme token) "'")))))))
 
 ;;
 ;; p6 ::= '(' <p0> ')'
@@ -57,15 +57,15 @@
 ;;
 (defn p6 [in]
   (let [t (first in)]
-    (case (token/type-of t)
-      :left-paren-token
+    (case (token/kind t)
+      :left-paren
         (let [[ast in-rest] (p0 (rest in))]
           [ast (match in-rest token/right-paren-token)])
-      :symbol-token
-        [(ast/symbol-AST (token/lexeme-of t)) (rest in)]
-      :number-token
-        [(ast/number-AST (Double/parseDouble (token/lexeme-of t))) (rest in)]
-      (let [lexeme (token/lexeme-of (or t token/EOS-token))]
+      :symbol
+        [(ast/symbol-AST (token/lexeme t)) (rest in)]
+      :number
+        [(ast/number-AST (Double/parseDouble (token/lexeme t))) (rest in)]
+      (let [lexeme (token/lexeme (or t token/EOS-token))]
         (throw (Exception. (str lexeme ": expecting '{', <symbol> or <number>")))))))
 
 ;;
@@ -75,11 +75,11 @@
 ;;
 (defn p5 [l in]
   (let [t (first in)]
-    (case (token/type-of t)
-      :min-token
+    (case (token/kind t)
+      :min
         (let [[r in-rest] (p6 (rest in))]
           (p5 (ast/min-AST l r) in-rest))
-      :max-token
+      :max
         (let [[r in-rest] (p6 (rest in))]
           (p5 (ast/max-AST l r) in-rest))
       [l in])))
@@ -100,17 +100,17 @@
 ;;
 (defn p3 [l in]
   (let [t (first in)]
-    (case (token/type-of t)
-      :star-token
+    (case (token/kind t)
+      :star
         (let [[r in-rest] (p4 (rest in))]
           (p3 (ast/multiply-AST l r) in-rest))
-      :slash-token
+      :slash
         (let [[r in-rest] (p4 (rest in))]
           (p3 (ast/divide-AST l r) in-rest))
-      :percent-token
+      :percent
         (let [[r in-rest] (p4 (rest in))]
           (p3 (ast/modulo-AST l r) in-rest))
-      :caret-token
+      :caret
         (let [[r in-rest] (p4 (rest in))]
           (p3 (ast/power-AST l r) in-rest))
       [l in])))
@@ -129,11 +129,11 @@
 ;;
 (defn p1 [l in]
   (let [t (first in)]
-    (case (token/type-of t)
-      :plus-token
+    (case (token/kind t)
+      :plus
         (let [[r in-rest] (p2 (rest in))]
           (p1 (ast/add-AST l r) in-rest))
-      :minus-token
+      :minus
         (let [[r in-rest] (p2 (rest in))]
           (p1 (ast/subtract-AST l r) in-rest))
       [l in])))
@@ -150,4 +150,4 @@
         t (first in-rest)]
     (if (nil? t)
       ast
-      (throw (Exception. (str (token/lexeme-of t) ": expecting " (token/lexeme-of token/EOS-token)))))))
+      (throw (Exception. (str (token/lexeme t) ": expecting " (token/lexeme token/EOS-token)))))))

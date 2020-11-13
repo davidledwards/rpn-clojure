@@ -15,85 +15,85 @@
 (ns rpn.ast
   (:require [clojure.string :as string]))
 
-(def AST-types
-  (sorted-set :symbol-AST
-              :number-AST
-              :add-AST
-              :subtract-AST
-              :multiply-AST
-              :divide-AST
-              :modulo-AST
-              :power-AST
-              :min-AST
-              :max-AST))
+(def kinds
+  #{:symbol
+    :number
+    :add
+    :subtract
+    :multiply
+    :divide
+    :modulo
+    :power
+    :min
+    :max})
 
-(defn type-of [ast]
-  (if (map? ast) (ast :type) nil))
+(defn- AST [kind]
+  {:kind kind})
 
-(defn- create-AST [type]
-  {:type type})
-
-(defn- create-binary-AST [type l r]
-  (assoc (create-AST type) :left l :right r))
+(defn- binary-AST [kind l r]
+  (conj (AST kind) {:left l :right r}))
 
 (defn symbol-AST [name]
-  (assoc
-    (create-AST :symbol-AST)
-    :name (if (string? name) name (str name))))
+  (conj
+    (AST :symbol)
+    {:name (if (string? name) name (str name))}))
 
 (defn number-AST [value]
-  (assoc
-    (create-AST :number-AST)
-    :value (if (number? value) value ##NaN)))
+  (conj
+    (AST :number)
+    {:value (if (number? value) value ##NaN)}))
 
 (defn add-AST [l r]
-  (create-binary-AST :add-AST l r))
+  (binary-AST :add l r))
 
 (defn subtract-AST [l r]
-  (create-binary-AST :subtract-AST l r))
+  (binary-AST :subtract l r))
 
 (defn multiply-AST [l r]
-  (create-binary-AST :multiply-AST l r))
+  (binary-AST :multiply l r))
 
 (defn divide-AST [l r]
-  (create-binary-AST :divide-AST l r))
+  (binary-AST :divide l r))
 
 (defn modulo-AST [l r]
-  (create-binary-AST :modulo-AST l r))
+  (binary-AST :modulo l r))
 
 (defn power-AST [base exp]
-  (create-binary-AST :power-AST base exp))
+  (binary-AST :power base exp))
 
 (defn min-AST [l r]
-  (create-binary-AST :min-AST l r))
+  (binary-AST :min l r))
 
 (defn max-AST [l r]
-  (create-binary-AST :max-AST l r))
+  (binary-AST :max l r))
 
-(defn format-AST
+(defn kind [ast]
+  (if (map? ast) (ast :kind) nil))
+
+(defn canonical
   ([ast]
-    (format-AST ast 0))
+    (canonical ast 0))
   ([ast depth]
     (str
       (string/join (repeat depth \space))
-      (case (type-of ast)
-        :symbol-AST
+      (case (kind ast)
+        :symbol
           (str "Symbol(" (ast :name) ")\n")
-        :number-AST
+        :number
           (str "Number(" (ast :value) ")\n")
-        :add-AST
-          (str "Add\n" (format-AST (ast :left) (inc depth)) (format-AST (ast :right) (inc depth)))
-        :subtract-AST
-          (str "Subtract\n" (format-AST (ast :left) (inc depth)) (format-AST (ast :right) (inc depth)))
-        :multiply-AST
-          (str "Multiply\n" (format-AST (ast :left) (inc depth)) (format-AST (ast :right) (inc depth)))
-        :divide-AST
-          (str "Divide\n" (format-AST (ast :left) (inc depth)) (format-AST (ast :right) (inc depth)))
-        :modulo-AST
-          (str "Modulo\n" (format-AST (ast :left) (inc depth)) (format-AST (ast :right) (inc depth)))
-        :power-AST
-          (str "Power\n" (format-AST (ast :left) (inc depth)) (format-AST (ast :right) (inc depth)))
-        :min-AST
-          (str "Min\n" (format-AST (ast :left) (inc depth)) (format-AST (ast :right) (inc depth)))
-        :max-AST
-          (str "Max\n" (format-AST (ast :left) (inc depth)) (format-AST (ast :right) (inc depth)))))))
+        :add
+          (str "Add\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))
+        :subtract
+          (str "Subtract\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))
+        :multiply
+          (str "Multiply\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))
+        :divide
+          (str "Divide\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))
+        :modulo
+          (str "Modulo\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))
+        :power
+          (str "Power\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))
+        :min
+          (str "Min\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))
+        :max
+          (str "Max\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))))))

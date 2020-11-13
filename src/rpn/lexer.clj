@@ -17,13 +17,13 @@
   (:require [clojure.string :as string])
   (:require [rpn.token :as token]))
 
-(def digits
+(def ^:private digits
   (set (map char (range (int \0) (inc (int \9))))))
 
-(def letters
+(def ^:private letters
   (set (map char (concat (range (int \A) (inc (int \Z))) (range (int \a) (inc (int \z)))))))
 
-(def whitespace
+(def ^:private whitespace
   #{\space \newline \tab \return \formfeed})
 
 (defn- read-number [in lexeme]
