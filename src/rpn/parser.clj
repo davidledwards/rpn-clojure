@@ -41,12 +41,14 @@
 ;;    ::= <number>
 ;;
 
+(defn- effective-lexeme [token]
+  (token/lexeme (or token token/EOS-token)))
+
 (defn- match [in token]
   (let [t (first in)]
     (if (token/same-kind? t token)
       (rest in)
-      (let [lexeme (token/lexeme (or t token/EOS-token))]
-        (throw (Exception. (str lexeme ": expecting '" (token/lexeme token) "'")))))))
+      (throw (Exception. (str (effective-lexeme t) ": expecting '" (token/lexeme token) "'"))))))
 
 (declare p0)
 
@@ -65,24 +67,22 @@
         [(ast/symbol-AST (token/lexeme t)) (rest in)]
       :number
         [(ast/number-AST (Double/parseDouble (token/lexeme t))) (rest in)]
-      (let [lexeme (token/lexeme (or t token/EOS-token))]
-        (throw (Exception. (str lexeme ": expecting '{', <symbol> or <number>")))))))
+      (throw (Exception. (str (effective-lexeme t) ": expecting '{', <symbol> or <number>"))))))
 
 ;;
 ;; p5 ::= 'min' <p6> <p5>
 ;;    ::= 'max' <p6> <p5>
 ;;    ::= e
 ;;
+(def ^:private p5-ops
+  {:min ast/min-AST
+   :max ast/max-AST})
+
 (defn- p5 [l in]
-  (let [t (first in)]
-    (case (token/kind t)
-      :min
-        (let [[r in-rest] (p6 (rest in))]
-          (recur (ast/min-AST l r) in-rest))
-      :max
-        (let [[r in-rest] (p6 (rest in))]
-          (recur (ast/max-AST l r) in-rest))
-      [l in])))
+  (if-let [op (p5-ops (token/kind (first in)))]
+    (let [[r in-rest] (p6 (rest in))]
+      (recur (op l r) in-rest))
+    [l in]))
 
 ;;
 ;; p4 ::= <p6> <p5>
@@ -98,22 +98,17 @@
 ;;    ::= '^' <p4> <p3>
 ;;    ::= e
 ;;
+(def ^:private p3-ops
+  {:star ast/multiply-AST
+   :slash ast/divide-AST
+   :percent ast/modulo-AST
+   :caret ast/power-AST})
+
 (defn- p3 [l in]
-  (let [t (first in)]
-    (case (token/kind t)
-      :star
-        (let [[r in-rest] (p4 (rest in))]
-          (recur (ast/multiply-AST l r) in-rest))
-      :slash
-        (let [[r in-rest] (p4 (rest in))]
-          (recur (ast/divide-AST l r) in-rest))
-      :percent
-        (let [[r in-rest] (p4 (rest in))]
-          (recur (ast/modulo-AST l r) in-rest))
-      :caret
-        (let [[r in-rest] (p4 (rest in))]
-          (recur (ast/power-AST l r) in-rest))
-      [l in])))
+  (if-let [op (p3-ops (token/kind (first in)))]
+    (let [[r in-rest] (p4 (rest in))]
+      (recur (op l r) in-rest))
+    [l in]))
 
 ;;
 ;; p2 ::= <p4> <p3>
@@ -127,16 +122,15 @@
 ;;    ::= '-' <p2> <p1>
 ;;    ::= e
 ;;
+(def ^:private p1-ops
+  {:plus ast/add-AST
+   :minus ast/subtract-AST})
+
 (defn- p1 [l in]
-  (let [t (first in)]
-    (case (token/kind t)
-      :plus
-        (let [[r in-rest] (p2 (rest in))]
-          (recur (ast/add-AST l r) in-rest))
-      :minus
-        (let [[r in-rest] (p2 (rest in))]
-          (recur (ast/subtract-AST l r) in-rest))
-      [l in])))
+  (if-let [op (p1-ops (token/kind (first in)))]
+    (let [[r in-rest] (p2 (rest in))]
+      (recur (op l r) in-rest))
+    [l in]))
 
 ;;
 ;; p0 ::= <p2> <p1>

@@ -16,12 +16,12 @@
 (ns rpn.input
   (:require [clojure.java.io :as io]))
 
-(defn- lazy-input-seq [r]
-  (lazy-seq
-    (let [c (.read r)]
-      (if (= c -1)
-        nil
-        (cons (char c) (lazy-input-seq r))))))
-
-(defn input-seq [in]
-  (lazy-input-seq (io/reader in :encoding "UTF-8")))
+(defn input [in]
+  (->>
+    (io/reader in :encoding "UTF-8")
+    ((fn get-char [r]
+      (lazy-seq
+        (let [c (.read r)]
+          (if (= c -1)
+            nil
+            (cons (char c) (get-char r)))))))))
