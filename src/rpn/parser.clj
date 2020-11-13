@@ -41,8 +41,6 @@
 ;;    ::= <number>
 ;;
 
-(declare p0 p1 p2 p3 p4 p5 p6)
-
 (defn- match [in token]
   (let [t (first in)]
     (if (token/same-kind? t token)
@@ -50,12 +48,14 @@
       (let [lexeme (token/lexeme (or t token/EOS-token))]
         (throw (Exception. (str lexeme ": expecting '" (token/lexeme token) "'")))))))
 
+(declare p0)
+
 ;;
 ;; p6 ::= '(' <p0> ')'
 ;;    ::= <symbol>
 ;;    ::= <number>
 ;;
-(defn p6 [in]
+(defn- p6 [in]
   (let [t (first in)]
     (case (token/kind t)
       :left-paren
@@ -73,21 +73,21 @@
 ;;    ::= 'max' <p6> <p5>
 ;;    ::= e
 ;;
-(defn p5 [l in]
+(defn- p5 [l in]
   (let [t (first in)]
     (case (token/kind t)
       :min
         (let [[r in-rest] (p6 (rest in))]
-          (p5 (ast/min-AST l r) in-rest))
+          (recur (ast/min-AST l r) in-rest))
       :max
         (let [[r in-rest] (p6 (rest in))]
-          (p5 (ast/max-AST l r) in-rest))
+          (recur (ast/max-AST l r) in-rest))
       [l in])))
 
 ;;
 ;; p4 ::= <p6> <p5>
 ;;
-(defn p4 [in]
+(defn- p4 [in]
   (let [[l in-rest] (p6 in)]
     (p5 l in-rest)))
 
@@ -98,27 +98,27 @@
 ;;    ::= '^' <p4> <p3>
 ;;    ::= e
 ;;
-(defn p3 [l in]
+(defn- p3 [l in]
   (let [t (first in)]
     (case (token/kind t)
       :star
         (let [[r in-rest] (p4 (rest in))]
-          (p3 (ast/multiply-AST l r) in-rest))
+          (recur (ast/multiply-AST l r) in-rest))
       :slash
         (let [[r in-rest] (p4 (rest in))]
-          (p3 (ast/divide-AST l r) in-rest))
+          (recur (ast/divide-AST l r) in-rest))
       :percent
         (let [[r in-rest] (p4 (rest in))]
-          (p3 (ast/modulo-AST l r) in-rest))
+          (recur (ast/modulo-AST l r) in-rest))
       :caret
         (let [[r in-rest] (p4 (rest in))]
-          (p3 (ast/power-AST l r) in-rest))
+          (recur (ast/power-AST l r) in-rest))
       [l in])))
 
 ;;
 ;; p2 ::= <p4> <p3>
 ;;
-(defn p2 [in]
+(defn- p2 [in]
   (let [[l in-rest] (p4 in)]
     (p3 l in-rest)))
 
@@ -127,21 +127,21 @@
 ;;    ::= '-' <p2> <p1>
 ;;    ::= e
 ;;
-(defn p1 [l in]
+(defn- p1 [l in]
   (let [t (first in)]
     (case (token/kind t)
       :plus
         (let [[r in-rest] (p2 (rest in))]
-          (p1 (ast/add-AST l r) in-rest))
+          (recur (ast/add-AST l r) in-rest))
       :minus
         (let [[r in-rest] (p2 (rest in))]
-          (p1 (ast/subtract-AST l r) in-rest))
+          (recur (ast/subtract-AST l r) in-rest))
       [l in])))
 
 ;;
 ;; p0 ::= <p2> <p1>
 ;;
-(defn p0 [in]
+(defn- p0 [in]
   (let [[l in-rest] (p2 in)]
     (p1 l in-rest)))
 
