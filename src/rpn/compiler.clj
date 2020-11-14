@@ -14,30 +14,37 @@
 ;;; limitations under the License.
 ;;;
 (ns rpn.compiler
-  (:require [rpn.input :as input])
+  (:require [rpn.token :as token])
   (:require [rpn.lexer :as lexer])
   (:require [rpn.parser :as parser])
   (:require [rpn.ast :as ast])
-  (:require [rpn.generator :as generator])
-  (:require [rpn.emitter :as emitter])
-  (:require [clojure.string :as string]))
-
-(defn compiler [& args]
-  (let [in "ZQ min Tu - ( EE min 0.39 * wi - ( ZU + ( 0.44 + ( ( ( OK ) - 0.51 - 0.21 ) ) ) - ( YV ) / ( ( rP ) min ( ( ( Pz ) - ( Ku * fF ^ ( yO ) % 0.46 ) + 0.89 - RW ) ) max 0.80 ) ) ) "
-        lex (lexer/lexer in)
-        p (parser/parser lex)
-        gen (generator/generator p)
-        e (emitter/emitter gen)]
-    (prn in)
-    (prn lex)
-    (prn p)
-    (print (ast/format-AST p))
-    (prn gen)
-    (prn e)
-    (println (string/join (map #(str % \newline) e)))))
+  (:require [rpn.generator :as gen])
+  (:require [rpn.optimizer :as opt])
+  (:require [rpn.code :as code])
+  (:require [rpn.input :as input]))
 
 (defn -main [& args]
   (try
-    (compiler args)
+    (let [in (input/input *in*)]
+      (case (first args)
+        "-?"
+          (do
+            (println "usage: rpnc [options")
+            (println "  Compile expression from stdin and emit instructions to stdout.")
+            (println "  -t tokenize only")
+            (println "  -p parse only")
+            (println "  -o optimize"))
+          "-t"
+            (doseq [t (lexer/lexer in)]
+              (println (token/canonical t)))
+          "-p"
+            (println (ast/canonical (parser/parser (lexer/lexer in))))
+          "-o"
+            (doseq [c (opt/optimizer (gen/generator (parser/parser (lexer/lexer in))))]
+              (println (code/instruction c)))
+          (if-let [arg (first args)]
+            (println (str arg ": unrecognized option"))
+            (doseq [c (gen/generator (parser/parser (lexer/lexer in)))]
+              (println (code/instruction c))))))
     (catch Exception e
       (println e))))
