@@ -78,7 +78,7 @@
 (defn push-code [value]
   (let [v (double value)]
     (conj
-      (code :push-code
+      (code :push
         (str "push " (to-canonical v))
         (str "Push(" v ")"))
       {:value v})))

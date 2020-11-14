@@ -128,28 +128,26 @@
           (analyze (inc pos) (rest codes) (cons {:pos pos :value (c :value)} stack))
         (code/operator? c)
           (->>
-            c
-            ((fn [code]
-              [(let [nums (filter some? (reverse (take (code :argn) stack)))]
-                (if (or
-                      (and (> (count nums) 1) (code/commutative-operator? code))
-                      (= (count nums) (code :argn)))
-                  (conj
-                    (reduce
-                      (fn [revs num]
-                        (conj revs {(num :pos) code/nop-code}))
-                      {} (drop-last nums))
-                    {((last nums) :pos)
-                      (code/push-code
-                        (reduce (operators (code/kind code)) (map #(% :value) nums)))}
-                    {pos
-                      (if (= (count nums) (code :argn))
-                        code/nop-code
-                        (operator-code
-                          (code/kind code)
-                          (inc (- (code :argn) (count nums)))))})
-                  {}))
-                (cons nil (drop (code :argn) stack))]))
+            [(let [nums (filter some? (reverse (take (c :argn) stack)))]
+              (if (or
+                    (and (> (count nums) 1) (code/commutative-operator? c))
+                    (= (count nums) (c :argn)))
+                (conj
+                  (reduce
+                    (fn [revs num]
+                      (conj revs {(num :pos) code/nop-code}))
+                    {} (drop-last nums))
+                  {((last nums) :pos)
+                    (code/push-code
+                      (reduce (operators (code/kind c)) (map #(% :value) nums)))}
+                  {pos
+                    (if (= (count nums) (c :argn))
+                      code/nop-code
+                      (operator-code
+                        (code/kind c)
+                        (inc (- (c :argn) (count nums)))))})
+                {}))
+              (cons nil (drop (c :argn) stack))]
             (#(let [[revs stack] %]
                 (if (empty? revs)
                   (analyze (inc pos) (rest codes) stack)
