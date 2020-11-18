@@ -47,4 +47,4 @@
             (doseq [c (gen/generator (parser/parser (lexer/lexer in)))]
               (println (code/instruction c))))))
     (catch Exception e
-      (println e))))
+      (println (.getMessage e)))))

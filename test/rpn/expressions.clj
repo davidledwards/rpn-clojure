@@ -62,7 +62,8 @@
 
 (defn- generate-expression []
   (reduce
-    (fn [e _] (into [] (concat (conj e (generate-operator)) (generate-operand))))
+    (fn [e _]
+      (into [] (concat (conj e (generate-operator)) (generate-operand))))
     (generate-operand) (range (rand-int 4))))
 
 (defn generate
