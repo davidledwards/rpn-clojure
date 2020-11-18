@@ -26,6 +26,23 @@
   (doseq [[e ast] parser-tests]
     (test/is (= (parser/parser (lexer/lexer e)) ast))))
 
+(test/deftest invalid-expressions
+  (doseq [e [""
+             " "
+             "a +"
+             "+ a"
+             "a 1"
+             "(a + 1"
+             "a + 1)"
+             "(a + 1))"
+             ")a"
+             "()"
+             "a + * 1"
+             "a $ 1"
+             "(a + 1)(b + 2)"]]
+  (test/is (thrown? Exception
+    (doall (parser/parser (lexer/lexer e)))))))
+
 (def ^:private parser-tests
   (list
     ["( 0.39 * ( 0.57 ) min 0.13 ) max 1.78 min 1.64 max ( nT ^ ( 0.47 % ( ( jQ max qh ^ PK % 1.01 ) ^ 1.24 max 0.50 max ( ( VU ^ 0.57 ) + qx ) ) - ( 1.71 ) max gx ) )"
