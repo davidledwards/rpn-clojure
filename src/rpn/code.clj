@@ -47,8 +47,8 @@
     :power
     :nop})
 
-(defn- code [kind ins canon]
-  {:kind kind :ins ins :canon canon})
+(defn- code [kind]
+  {:kind kind})
 
 (defn- binary-operator [assoc? commut?]
   {:argn 2 :operator :binary :assoc assoc? :commut commut?})
@@ -56,7 +56,7 @@
 (defn- multiary-operator [argn assoc? commut?]
   {:argn argn :operator :multiary :assoc assoc? :commut commut?})
 
-(defn- to-canonical [^Double n]
+(defn- canonicalize [^Double n]
   (string/join
     (reverse
       (drop-while #(= % \.)
@@ -65,78 +65,61 @@
 
 (defn declare-symbol-code [name]
   (conj
-    (code :declare-symbol
-      (str "sym " name)
-      (str "DeclareSymbol(" name ")"))
+    (code :declare-symbol)
     {:name name}))
 
 (defn push-symbol-code [name]
-  (code :push-symbol
-    (str "pushsym " name)
-    (str "PushSymbol(" name ")")))
+  (conj
+    (code :push-symbol)
+    {:name name}))
 
 (defn push-code [value]
-  (let [v (double value)]
-    (conj
-      (code :push
-        (str "push " (to-canonical v))
-        (str "Push(" v ")"))
-      {:value v})))
+  (conj
+    (code :push)
+    {:value (double value)}))
 
 (defn add-code [argn]
   (conj
-    (code :add
-      (str "add " argn)
-      (str "Add(" argn ")"))
+    (code :add)
     (multiary-operator argn true true)))
 
 (defn subtract-code [argn]
   (conj
-    (code :subtract
-      (str "sub " argn)
-      (str "Subtract(" argn ")"))
+    (code :subtract)
     (multiary-operator argn false false)))
 
 (defn multiply-code [argn]
   (conj
-    (code :multiply
-      (str "mul " argn)
-      (str "Multiply(" argn ")"))
+    (code :multiply)
     (multiary-operator argn true true)))
 
 (defn divide-code [argn]
   (conj
-    (code :divide
-      (str "div " argn)
-      (str "Divide(" argn ")"))
+    (code :divide)
     (multiary-operator argn false false)))
 
 (defn min-code [argn]
   (conj
-    (code :min
-      (str "min " argn)
-      (str "Min(" argn ")"))
+    (code :min)
     (multiary-operator argn true true)))
 
 (defn max-code [argn]
   (conj
-    (code :max
-      (str "max " argn)
-      (str "Max(" argn ")"))
+    (code :max)
     (multiary-operator argn true true)))
 
 (def modulo-code
   (conj
-    (code :modulo "mod" "Modulo()")
+    (code :modulo)
     (binary-operator false false)))
 
 (def power-code
   (conj
-    (code :power "pow" "Power()")
+    (code :power)
     (binary-operator false false)))
 
 (def nop-code
-  (code :nop "nop" "Nop()"))
+  (code :nop))
 
 (defn kind [code]
   (if (map? code) (code :kind) nil))
@@ -144,11 +127,72 @@
 (defn same-kind? [a b]
   (= (kind a) (kind b)))
 
+(def ^:private instruction-names
+  {:declare-symbol "sym"
+   :push-symbol "pushsym"
+   :push "push"
+   :add "add"
+   :subtract "sub"
+   :multiply "mul"
+   :divide "div"
+   :min "min"
+   :max "max"
+   :modulo "mod"
+   :power "pow"
+   :nop "nop"})
+
 (defn instruction [code]
-  (if (map? code) (code :ins) nil))
+  (if-some [k (kind code)]
+    (str (instruction-names k) " "
+      (cond
+        (contains? #{:declare-symbol
+                     :push-symbol} k)
+          (code :name)
+        (= k :push)
+          (canonicalize (code :value))
+        (contains? #{:add
+                     :subtract
+                     :multiply
+                     :divide
+                     :min
+                     :max} k)
+          (code :argn)
+        (contains? #{:modulo
+                     :power
+                     :nop} k)
+          ""
+        :else
+          ""))
+      nil))
+
+(def ^:private canonical-names
+  (reduce #(conj %1 {%2 (subs (str %2) 1)}) {} kinds))
 
 (defn canonical [code]
-  (if (map? code) (code :canon) ""))
+  (if-some [k (kind code)]
+    (str
+      "(" (canonical-names k) " "
+      (cond
+        (contains? #{:declare-symbol
+                     :push-symbol} k)
+          (code :name)
+        (= k :push)
+          (canonicalize (code :value))
+        (contains? #{:add
+                     :subtract
+                     :multiply
+                     :divide
+                     :min
+                     :max} k)
+          (code :argn)
+        (contains? #{:modulo
+                     :power
+                     :nop} k)
+          ""
+        :else
+          "")
+      ")")
+    ""))
 
 (defn declare-symbol-code? [code]
   (= (kind code) :declare-symbol))
