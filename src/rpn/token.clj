@@ -77,9 +77,12 @@
 (defn lexeme [token]
   (if (map? token) (token :lexeme) nil))
 
+(def ^:private canonical-names
+  (reduce #(conj %1 {%2 (subs (str %2) 1)}) {} kinds))
+
 (defn canonical [token]
-  (if-some [l (lexeme token)]
-    (str "Token(" l ")")
+  (if-some [n (canonical-names (kind token))]
+    (str "(" n " \"" (token :lexeme) "\")")
     ""))
 
 (defn plus-token? [token]
