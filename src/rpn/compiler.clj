@@ -38,7 +38,7 @@
             (doseq [t (lexer/lexer in)]
               (println (token/canonical t)))
           "-p"
-            (println (ast/canonical (parser/parser (lexer/lexer in))))
+            (println (ast/typeset (parser/parser (lexer/lexer in))))
           "-o"
             (doseq [c (opt/optimizer (gen/generator (parser/parser (lexer/lexer in))))]
               (println (code/instruction c)))

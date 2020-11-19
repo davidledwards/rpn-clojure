@@ -70,30 +70,39 @@
 (defn kind [ast]
   (if (map? ast) (ast :kind) nil))
 
-(defn canonical
-  ([ast]
-    (canonical ast 0))
-  ([ast depth]
+(def ^:private canonical-names
+  (reduce #(conj %1 {%2 (subs (str %2) 1)}) {} kinds))
+
+(defn canonical [ast]
+  (if-some [k (kind ast)]
     (str
-      (string/join (repeat depth \space))
-      (case (kind ast)
+      "(" (canonical-names k) " "
+      (case k
         :symbol
-          (str "Symbol(" (ast :name) ")\n")
+          (ast :name)
         :number
-          (str "Number(" (ast :value) ")\n")
-        :add
-          (str "Add\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))
-        :subtract
-          (str "Subtract\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))
-        :multiply
-          (str "Multiply\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))
-        :divide
-          (str "Divide\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))
-        :modulo
-          (str "Modulo\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))
-        :power
-          (str "Power\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))
-        :min
-          (str "Min\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))
-        :max
-          (str "Max\n" (canonical (ast :left) (inc depth)) (canonical (ast :right) (inc depth)))))))
+          (ast :value)
+        (str (canonical (ast :left)) " " (canonical (ast :right))))
+      ")")
+    ""))
+
+(defn- tab [n]
+  (string/join (repeat (* n 2) \space)))
+
+(defn typeset
+  ([ast]
+    (typeset ast 0))
+  ([ast depth]
+    (if-some [k (kind ast)]
+      (str
+        (if (> depth 0) "\n" "") (tab depth) "(" (canonical-names k)
+        (case k
+          :symbol
+            (str " " (ast :name))
+          :number
+            (str " " (ast :value))
+          (str
+            (typeset (ast :left) (inc depth))
+            (typeset (ast :right) (inc depth))))
+        ")")
+      "")))
