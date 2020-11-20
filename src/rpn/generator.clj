@@ -17,42 +17,34 @@
   (:require [rpn.ast :as ast])
   (:require [rpn.code :as code]))
 
+(def ^:private operator-codes
+  {:add (code/add-code 2)
+   :subtract (code/subtract-code 2)
+   :multiply (code/multiply-code 2)
+   :divide (code/divide-code 2)
+   :min (code/min-code 2)
+   :max (code/max-code 2)
+   :modulo code/modulo-code
+   :power code/power-code})
+
 (defn- generate
   ([ast]
-   (let [[codes syms] (generate ast [[] #{}])]
-     (concat (map #(code/declare-symbol-code %) (sort syms)) codes)))
+    (let [[codes syms] (generate ast [[] #{}])]
+      (concat
+        (map #(code/declare-symbol-code %) (sort syms))
+        codes)))
   ([ast state]
-    (case (ast/kind ast)
-      :symbol
-        (let [[codes syms] state]
-          [(conj codes (code/push-symbol-code (ast :name))) (conj syms (ast :name))])
-      :number
-        (let [[codes syms] state]
-          [(conj codes (code/push-code (ast :value))) syms])
-      :add
-        (let [[codes syms] (generate (ast :right) (generate (ast :left) state))]
-          [(conj codes (code/add-code 2)) syms])
-      :subtract
-        (let [[codes syms] (generate (ast :right) (generate (ast :left) state))]
-          [(conj codes (code/subtract-code 2)) syms])
-      :multiply
-        (let [[codes syms] (generate (ast :right) (generate (ast :left) state))]
-          [(conj codes (code/multiply-code 2)) syms])
-      :divide
-        (let [[codes syms] (generate (ast :right) (generate (ast :left) state))]
-          [(conj codes (code/divide-code 2)) syms])
-      :min
-        (let [[codes syms] (generate (ast :right) (generate (ast :left) state))]
-          [(conj codes (code/min-code 2)) syms])
-      :max
-        (let [[codes syms] (generate (ast :right) (generate (ast :left) state))]
-          [(conj codes (code/max-code 2)) syms])
-      :modulo
-        (let [[codes syms] (generate (ast :right) (generate (ast :left) state))]
-          [(conj codes code/modulo-code) syms])
-      :power
-        (let [[codes syms] (generate (ast :right) (generate (ast :left) state))]
-          [(conj codes code/power-code) syms]))))
+    (let [k (ast/kind ast)]
+      (cond
+        (= k :symbol)
+          (let [[cs syms] state]
+            [(conj cs (code/push-symbol-code (ast :name))) (conj syms (ast :name))])
+        (= k :number)
+          (let [[cs syms] state]
+            [(conj cs (code/push-code (ast :value))) syms])
+        (contains? operator-codes k)
+          (let [[cs syms] (generate (ast :right) (generate (ast :left) state))]
+            [(conj cs (operator-codes k)) syms])))))
 
 (defn generator [ast]
   (generate ast))
