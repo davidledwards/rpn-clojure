@@ -14,7 +14,8 @@
 ;;; limitations under the License.
 ;;;
 (ns rpn.optimizer
-  (:require [rpn.code :as code]))
+  (:require [rpn.code :as code])
+  (:require [rpn.evaluator :as evaluator]))
 
 (def ^:private dynamic-ctors
   {:add code/add-code
@@ -35,16 +36,6 @@
 
 (defn operator-code [kind argn]
   ((operator-ctors kind) argn))
-
-(def ^:private operators
-  {:add #(+ %1 %2)
-   :subtract #(- %1 %2)
-   :multiply #(* %1 %2)
-   :divide #(/ %1 %2)
-   :min #(min %1 %2)
-   :max #(max %1 %2)
-   :modulo #(mod %1 %2)
-   :power #(Math/pow %1 %2)})
 
 (defn revise [codes revs]
   (->>
@@ -139,7 +130,7 @@
                     {} (drop-last nums))
                   {((last nums) :pos)
                     (code/push-code
-                      (reduce (operators (code/kind c)) (map #(% :value) nums)))}
+                      (reduce (evaluator/operators (code/kind c)) (map #(% :value) nums)))}
                   {pos
                     (if (= (count nums) (c :argn))
                       code/nop-code
