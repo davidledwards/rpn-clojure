@@ -23,5 +23,11 @@
         :count 100
       }
     }
+    :gen-generator-tests {
+      :exec-fn rpn.tools/gen-generator-tests
+      :exec-args {
+        :count 100
+      }
+    }
   }
 }

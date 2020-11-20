@@ -16,7 +16,6 @@
 (ns rpn.parser-test
   (:require [clojure.test :as test])
   (:require [rpn.expressions :as expr])
-  (:require [rpn.tools :as tools])
   (:require [rpn.lexer :as lexer])
   (:require [rpn.parser :as parser]))
 

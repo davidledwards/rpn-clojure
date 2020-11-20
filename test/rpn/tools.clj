@@ -19,7 +19,9 @@
   (:require [rpn.token :as token])
   (:require [rpn.lexer :as lexer])
   (:require [rpn.parser :as parser])
-  (:require [rpn.ast :as ast]))
+  (:require [rpn.ast :as ast])
+  (:require [rpn.generator :as gen])
+  (:require [rpn.code :as code]))
 
 (defn- name-hash [name]
   (/ (reduce #(+ %1 (/ (int %2) 100.0)) 0.0 name) 10.))
@@ -29,7 +31,7 @@
 
 (defn- parser-tests [n]
   (do
-    (print (str "(list"))
+    (print "(list")
     (doseq [i (range n)]
       (let [[e _] (expr/generate)]
         (print (str "\n" (tab 1) "[\"" e "\""))
@@ -67,12 +69,48 @@
           (print "]")))
     (println ")")))
 
+(defn generator-tests [n]
+  (print "(list")
+  (doseq [i (range n)]
+    (let [[e _] (expr/generate)]
+      (println (str "\n" (tab 1) "[\"" e "\""))
+      (print (str (tab 2) "(list"))
+      (doseq [c (gen/generator (parser/parser (lexer/lexer e)))]
+        (print
+          (str "\n" (tab 3)
+            (case (code/kind c)
+              :declare-symbol
+                (str "(rpn.code/declare-symbol-code \"" (c :name) "\")")
+              :push-symbol
+                (str "(rpn.code/push-symbol-code \"" (c :name) "\")")
+              :push
+                (str "(rpn.code/push-code " (c :value) ")")
+              :add
+                (str "(rpn.code/add-code " (c :argn) ")")
+              :subtract
+                (str "(rpn.code/subtract-code " (c :argn) ")")
+              :multiply
+                (str "(rpn.code/multiply-code " (c :argn) ")")
+              :divide
+                (str "(rpn.code/divide-code " (c :argn) ")")
+              :min
+                (str "(rpn.code/min-code " (c :argn) ")")
+              :max
+                (str "(rpn.code/max-code " (c :argn) ")")
+              :modulo
+                "rpn.code/modulo-code"
+              :power
+                "rpn.code/power-code"))))
+      (print ")]")))
+  (println ")"))
+
 (defn gen-parser-tests [arg-map]
   (parser-tests
     (or (and (map? arg-map) (arg-map :count)) 100)))
 
-(defn generator-tests []
-  nil)
+(defn gen-generator-tests [arg-map]
+  (generator-tests
+    (or (and (map? arg-map) (arg-map :count)) 100)))
 
 (defn optimizer-tests []
   nil)

@@ -14,10 +14,10 @@
 ;;; limitations under the License.
 ;;;
 (ns rpn.lexer-test
+  (:require [clojure.test :as test])
   (:require [rpn.lexer :as lexer])
   (:require [rpn.token :as token])
-  (:require [rpn.expressions :as expr])
-  (:require [clojure.test :as test]))
+  (:require [rpn.expressions :as expr]))
 
 (test/deftest valid-tokens
   (test/testing "valid tokens in randomized expressions"
