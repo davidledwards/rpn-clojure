@@ -25,7 +25,7 @@
    :min code/min-code
    :max code/max-code})
 
-(defn dynamic-code [kind argn]
+(defn- dynamic-code [kind argn]
   ((dynamic-ctors kind) argn))
 
 (def ^:private operator-ctors
@@ -34,10 +34,10 @@
      :power (fn [& _] code/power-code)}
     dynamic-ctors))
 
-(defn operator-code [kind argn]
+(defn- operator-code [kind argn]
   ((operator-ctors kind) argn))
 
-(defn revise [codes revs]
+(defn- revise [codes revs]
   (->>
     (reduce
       (fn [state code]
@@ -51,7 +51,7 @@
       [0 []] codes)
     (#(seq (last %)))))
 
-(defn combine-dynamic-operators-revisions [codes]
+(defn- combine-dynamic-operators-revisions [codes]
   (->>
     (reduce
       (fn [state code]
@@ -82,10 +82,10 @@
       [0 nil {}] codes)
     (#(last %))))
 
-(defn combine-dynamic-operators [codes]
+(defn- combine-dynamic-operators [codes]
   (revise codes (combine-dynamic-operators-revisions codes)))
 
-(defn flatten-dynamic-operators-revisions [codes]
+(defn- flatten-dynamic-operators-revisions [codes]
   (->>
     (reduce
       (fn [state code]
@@ -102,10 +102,10 @@
       [0 nil {}] codes)
     (#(last %))))
 
-(defn flatten-dynamic-operators [codes]
+(defn- flatten-dynamic-operators [codes]
   (revise codes (flatten-dynamic-operators-revisions codes)))
 
-(defn analyze
+(defn- analyze
   ([codes]
     (analyze 0 codes ()))
   ([pos codes stack]
@@ -148,13 +148,13 @@
         :else
           (analyze (inc pos) (rest codes) stack)))))
 
-(defn evaluate-literal-expressions [codes]
+(defn- evaluate-literal-expressions [codes]
   (let [revs (analyze codes)]
     (if (empty? revs)
       codes
       (recur (revise codes revs)))))
 
-(def optimizations
+(def- optimizations
   (comp
     evaluate-literal-expressions
     flatten-dynamic-operators
