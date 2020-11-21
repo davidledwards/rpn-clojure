@@ -17,17 +17,9 @@
       }
       :main-opts ["-m" "cognitect.test-runner"]
     }
-    :gen-parser-tests {
-      :exec-fn rpn.tools/gen-parser-tests
-      :exec-args {
-        :count 100
-      }
-    }
-    :gen-generator-tests {
-      :exec-fn rpn.tools/gen-generator-tests
-      :exec-args {
-        :count 100
-      }
+    :gen-tests {
+      :extra-paths ["test"]
+      :main-opts ["-m" "rpn.tools"]
     }
   }
 }

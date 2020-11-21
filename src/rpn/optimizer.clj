@@ -62,17 +62,17 @@
                 [(cons nil frames) revs]
               (code/multiary-operator? code)
                 (->>
-                  (let [f (first (take (dec (code :argn)) frames))]
+                  (let [f (first (drop (dec (code :argn)) frames))]
                     (if (and f (code/same-kind? (f :code) code))
                       (let [new-code (dynamic-code
                                       (code/kind code)
                                       (dec (+ (code :argn) ((f :code) :argn))))]
                         [new-code (assoc revs (f :pos) code/nop-code pos new-code)])
                       [code revs]))
-                  (#(let [[code revs] %]
+                  (#(let [[new-code revs] %]
                     [(->>
                       (drop (code :argn) frames)
-                      (cons {:pos pos :code code})) revs])))
+                      (cons {:pos pos :code new-code})) revs])))
               (code/operator? code)
                 [(->>
                   (drop (code :argn) frames)
@@ -154,7 +154,7 @@
       codes
       (recur (revise codes revs)))))
 
-(def- optimizations
+(def ^:private optimizations
   (comp
     evaluate-literal-expressions
     flatten-dynamic-operators

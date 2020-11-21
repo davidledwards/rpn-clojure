@@ -17,14 +17,22 @@
   (:require [rpn.code :as code]))
 
 (def operators
-  {:add #(+ %1 %2)
-   :subtract #(- %1 %2)
-   :multiply #(* %1 %2)
-   :divide #(/ %1 %2)
-   :min #(min %1 %2)
-   :max #(max %1 %2)
-   :modulo #(mod %1 %2)
-   :power #(Math/pow %1 %2)})
+  {:add
+    #(+ %1 %2)
+   :subtract
+    #(- %1 %2)
+   :multiply
+    #(* %1 %2)
+   :divide
+    #(/ %1 (double %2))
+   :min
+    #(min %1 %2)
+   :max
+    #(max %1 %2)
+   :modulo
+    #(try (mod %1 %2) (catch NumberFormatException _ ##NaN))
+   :power
+    #(Math/pow %1 %2)})
 
 (defn evaluator [resolver codes]
   (loop [cs codes
@@ -48,10 +56,12 @@
               (recur
                 (rest cs)
                 (cons
-                  (reduce #((operators (code/kind c)) %1 %2) (reverse vs))
+                  (reduce
+                    #((operators (code/kind c)) %1 %2)
+                    (reverse vs))
                   (drop (c :argn) stack))
                 syms)
-              (throw (Exception. "evaluator stack underflow"))))
+              (throw (Exception. (str "evaluator stack underflow" (prn c) (prn stack) (pr cs))))))
         c
           (recur (rest cs) stack syms)
         :else
