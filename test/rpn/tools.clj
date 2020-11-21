@@ -14,6 +14,14 @@
 ;;; limitations under the License.
 ;;;
 (ns rpn.tools
+  "Tools for automatically generating random conformant expressions.
+  
+  Note that these expressions are generated for testing purposes only and may
+  appear to be senseless when visually inspected. However, they do conform to
+  the specified grammar and are sufficient for detecting regressions.
+
+  The output of each test generation is formatted such that it can be
+  literally cut and pasted into the unit test itself."
   (:require [clojure.string :as string])
   (:require [rpn.expressions :as expr])
   (:require [rpn.token :as token])
@@ -30,7 +38,9 @@
 (defn- tab [n]
   (string/join (repeat (* n 2) \space)))
 
-(defn- parser-tests [n]
+(defn parser-tests
+  "Produces a sequence of `n` pairs of a random expression and its corresponding AST."
+  [n]
   (print "(list")
   (doseq [_ (range n)]
     (let [[e _] (expr/generate)]
@@ -69,7 +79,10 @@
         (print "]")))
   (println ")"))
 
-(defn- generator-tests [n]
+(defn generator-tests
+  "Produces a sequence of `n` pairs of a random expression and its corresponding
+  unoptimized instruction sequence."
+  [n]
   (print "(list")
   (doseq [_ (range n)]
     (let [[e _] (expr/generate)]
@@ -104,7 +117,19 @@
       (print ")]")))
   (println ")"))
 
-(defn- optimizer-tests [n]
+(defn optimizer-tests
+  "Produces a sequence of at least `n` pairs of instructions with a computed
+  value.
+
+  The computed value is possible due to a method of assigning values to each
+  symbol during evalation using a deterministic hash. Since symbol names are
+  stable, an optimization of the instruction sequence should produce the
+  same value.
+  
+  Note that in some cases, the precomputed value is `##NaN`, which gets quietly
+  ignored and does not appear in the final output, hence the reason for
+  possibly fewer than `n` pairs."
+  [n]
   (print "(list")
   (doseq [_ (range n)]
     (let [[e _] (expr/generate)

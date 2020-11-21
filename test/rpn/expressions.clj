@@ -14,6 +14,8 @@
 ;;; limitations under the License.
 ;;;
 (ns rpn.expressions
+  "Tools for generating random expressions that can be used for constructing
+  unit tests."
   (:require [clojure.string :as string])
   (:require [rpn.token :as token]))
 
@@ -67,6 +69,10 @@
     (generate-operand) (range (rand-int 4))))
 
 (defn generate
+  "Generate a random expression that conforms to the language grammar.
+  
+  If provided, `ws` is used as the whitespace between terms, otherwise `\\space` is
+  assumed."
   ([]
     (generate " "))
   ([ws]
