@@ -13,25 +13,23 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 ;;;
-(ns rpn.token)
+(ns rpn.token
+  "Authoritative set of all recognized token types and their regular expressions.
 
-;;
-;; Authoritative set of all recognized token types and their regular expressions.
-;;
-;; plus-token = +
-;; minus-token = -
-;; star-token = *
-;; slash-token = /
-;; percent-token = %
-;; caret-token = ^
-;; left-paren-token = (
-;; right-paren-token = )
-;; min-token = min
-;; max-token = max
-;; symbol-token = [A-Za-z]+
-;; number-token = ([0-9]+)|([0-9]+\.[0-9]+)
-;; EOS-token = <end of stream>
-;;
+  plus-token = +
+  minus-token = -
+  star-token = *
+  slash-token = /
+  percent-token = %
+  caret-token = ^
+  left-paren-token = (
+  right-paren-token = )
+  min-token = min
+  max-token = max
+  symbol-token = [A-Za-z]+
+  number-token = ([0-9]+)|([0-9]+\\.[0-9]+)
+  EOS-token = <end of stream>")
+
 (def kinds
   #{:plus
     :minus

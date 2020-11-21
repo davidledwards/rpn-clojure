@@ -13,33 +13,28 @@
 ;;; limitations under the License.
 ;;;
 (ns rpn.parser
+  "Parser.
+
+  p0 ::= <p2> <p1>
+  p1 ::= '+' <p2> <p1>
+     ::= '-' <p2> <p1>
+     ::= e
+  p2 ::= <p4> <p3>
+  p3 ::= '*' <p4> <p3>
+     ::= '/' <p4> <p3>
+     ::= '%' <p4> <p3>
+     ::= '^' <p4> <p3>
+     ::= e
+  p4 ::= <p6> <p5>
+  p5 ::= 'min' <p6> <p5>
+     ::= 'max' <p6> <p5>
+     ::= e
+  p6 ::= '(' <p0> ')'
+     ::= <symbol>
+     ::= <number>"
   (:require [rpn.token :as token])
   (:require [rpn.lexer :as lexer])
   (:require [rpn.ast :as ast]))
-
-;;
-;; A recursive-descent parser that transforms a sequence of tokens into a syntax tree.
-;;
-;; Grammar:
-;;
-;; p0 ::= <p2> <p1>
-;; p1 ::= '+' <p2> <p1>
-;;    ::= '-' <p2> <p1>
-;;    ::= e
-;; p2 ::= <p4> <p3>
-;; p3 ::= '*' <p4> <p3>
-;;    ::= '/' <p4> <p3>
-;;    ::= '%' <p4> <p3>
-;;    ::= '^' <p4> <p3>
-;;    ::= e
-;; p4 ::= <p6> <p5>
-;; p5 ::= 'min' <p6> <p5>
-;;    ::= 'max' <p6> <p5>
-;;    ::= e
-;; p6 ::= '(' <p0> ')'
-;;    ::= <symbol>
-;;    ::= <number>
-;;
 
 (defn- effective-lexeme [token]
   (token/lexeme (or token token/EOS-token)))
@@ -69,15 +64,15 @@
         [(ast/number-AST (Double/parseDouble (token/lexeme t))) (rest in)]
       (throw (Exception. (str (effective-lexeme t) ": expecting '{', <symbol> or <number>"))))))
 
+(def ^:private p5-ops
+  {:min ast/min-AST
+   :max ast/max-AST})
+
 ;;
 ;; p5 ::= 'min' <p6> <p5>
 ;;    ::= 'max' <p6> <p5>
 ;;    ::= e
 ;;
-(def ^:private p5-ops
-  {:min ast/min-AST
-   :max ast/max-AST})
-
 (defn- p5 [l in]
   (if-let [op (p5-ops (token/kind (first in)))]
     (let [[r in-rest] (p6 (rest in))]
@@ -91,6 +86,12 @@
   (let [[l in-rest] (p6 in)]
     (p5 l in-rest)))
 
+(def ^:private p3-ops
+  {:star ast/multiply-AST
+   :slash ast/divide-AST
+   :percent ast/modulo-AST
+   :caret ast/power-AST})
+
 ;;
 ;; p3 ::= '*' <p4> <p3>
 ;;    ::= '/' <p4> <p3>
@@ -98,12 +99,6 @@
 ;;    ::= '^' <p4> <p3>
 ;;    ::= e
 ;;
-(def ^:private p3-ops
-  {:star ast/multiply-AST
-   :slash ast/divide-AST
-   :percent ast/modulo-AST
-   :caret ast/power-AST})
-
 (defn- p3 [l in]
   (if-let [op (p3-ops (token/kind (first in)))]
     (let [[r in-rest] (p4 (rest in))]
@@ -117,15 +112,15 @@
   (let [[l in-rest] (p4 in)]
     (p3 l in-rest)))
 
+(def ^:private p1-ops
+  {:plus ast/add-AST
+   :minus ast/subtract-AST})
+
 ;;
 ;; p1 ::= '+' <p2> <p1>
 ;;    ::= '-' <p2> <p1>
 ;;    ::= e
 ;;
-(def ^:private p1-ops
-  {:plus ast/add-AST
-   :minus ast/subtract-AST})
-
 (defn- p1 [l in]
   (if-let [op (p1-ops (token/kind (first in)))]
     (let [[r in-rest] (p2 (rest in))]
@@ -139,7 +134,9 @@
   (let [[l in-rest] (p2 in)]
     (p1 l in-rest)))
 
-(defn parser [in]
+(defn parser
+  "A recursive-descent parser that transforms a sequence of tokens from `in` into an AST."
+  [in]
   (let [[ast in-rest] (p0 in)
         t (first in-rest)]
     (if (nil? t)

@@ -14,6 +14,7 @@
 ;;; limitations under the License.
 ;;;
 (ns rpn.lexer
+  "Lexical analyzer."
   (:require [clojure.string :as string])
   (:require [rpn.token :as token]))
 
@@ -64,7 +65,13 @@
       :else
         (throw (Exception. (str c ": unrecognized character"))))))
 
-(defn lexer [in]
+(defn lexer
+  "A lexical analyzer that transforms a sequence of characters from `in` into a
+  lazy sequence of tokens.
+
+  Tokens must either be delimited by one or more whitespace characters, or be clearly
+  distinguishable from each other if not separated by whitespace."
+  [in]
   (lazy-seq
     (let [[t in-rest] (tokenize in)]
       (if (token/EOS-token? t)
