@@ -140,26 +140,26 @@
 
 (defn instruction [code]
   (if-some [k (kind code)]
-    (str (instruction-names k) " "
+    (str (instruction-names k)
       (cond
         (contains? #{:declare-symbol
                      :push-symbol} k)
-          (code :name)
+          (str " " (code :name))
         (= k :push)
-          (canonicalize (code :value))
+          (str " " (canonicalize (code :value)))
         (contains? #{:add
                      :subtract
                      :multiply
                      :divide
                      :min
                      :max} k)
-          (code :argn)
+          (str " " (code :argn))
         (contains? #{:modulo
                      :power
                      :nop} k)
-          ""
+          nil
         :else
-          ""))
+          nil))
       nil))
 
 (def ^:private canonical-names
