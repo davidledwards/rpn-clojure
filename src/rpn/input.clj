@@ -16,7 +16,10 @@
 (ns rpn.input
   (:require [clojure.java.io :as io]))
 
-(defn input [in]
+(defn input
+  "Makes an input stream represented by `in` appear as a lazy sequence of
+  characters."
+  [in]
   (->>
     (io/reader in :encoding "UTF-8")
     ((fn get-char [r]

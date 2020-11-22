@@ -13,6 +13,7 @@
 ;;; limitations under the License.
 ;;;
 (ns rpn.ast
+  "Syntax tree."
   (:require [clojure.string :as string]))
 
 (def kinds

@@ -14,6 +14,7 @@
 ;;; limitations under the License.
 ;;;
 (ns rpn.evaluator
+  "RPN evaluator."
   (:require [rpn.code :as code]))
 
 (def operators
@@ -34,7 +35,12 @@
    :power
     #(Math/pow %1 %2)})
 
-(defn evaluator [resolver codes]
+(defn evaluator
+  "An evaluator that computes the result of an instruction sequence.
+  
+  `resolver` is a single-argument function that returns the value of a symbol, the type
+  of which should be double. `codes` is the sequence of instructions."
+  [resolver codes]
   (loop [cs codes
          stack nil
          syms {}]

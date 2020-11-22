@@ -14,25 +14,22 @@
 ;;; limitations under the License.
 ;;;
 (ns rpn.code
+  "Instructions generated from a syntax tree.
+
+  sym <symbol>
+  pushsym <symbol>
+  push <number>
+  add <args>
+  sub <args>
+  mul <args>
+  div <args>
+  min <args>
+  max <args>
+  mod
+  pow
+  nop"
   (:require [clojure.string :as string]))
 
-;;
-;; Represents a bytecode instruction generated from a syntax tree.
-;;
-;; Recognized instructions:
-;; sym <symbol>
-;; pushsym <symbol>
-;; push <number>
-;; add <args>
-;; sub <args>
-;; mul <args>
-;; div <args>
-;; min <args>
-;; max <args>
-;; mod
-;; pow
-;; nop
-;;
 (def kinds
   #{:declare-symbol
     :push-symbol

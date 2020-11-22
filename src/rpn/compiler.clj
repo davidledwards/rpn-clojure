@@ -14,6 +14,7 @@
 ;;; limitations under the License.
 ;;;
 (ns rpn.compiler
+  "RPN compiler."
   (:require [rpn.token :as token])
   (:require [rpn.lexer :as lexer])
   (:require [rpn.parser :as parser])
