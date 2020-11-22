@@ -7,6 +7,9 @@
     :rpnc {
       :main-opts ["-m rpn.compiler"]
     }
+    :rpn {
+      :main-opts ["-m rpn.interpreter"]
+    }
     :run-tests {
       :extra-paths ["test"]
       :extra-deps {

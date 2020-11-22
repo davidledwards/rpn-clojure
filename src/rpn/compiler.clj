@@ -26,26 +26,28 @@
 
 (defn -main [& args]
   (try
-    (let [in (input/input *in*)]
-      (case (first args)
-        "-?"
+    (let [in (input/input *in*)
+          arg (first args)]
+      (cond
+        (= arg "-h")
           (do
             (println "usage: rpnc [options")
             (println "  Compile expression from stdin and emit instructions to stdout.")
             (println "  -t tokenize only")
             (println "  -p parse only")
             (println "  -o optimize"))
-          "-t"
-            (doseq [t (lexer/lexer in)]
-              (println (token/canonical t)))
-          "-p"
-            (println (ast/typeset (parser/parser (lexer/lexer in))))
-          "-o"
-            (doseq [c (opt/optimizer (gen/generator (parser/parser (lexer/lexer in))))]
-              (println (code/instruction c)))
-          (if-let [arg (first args)]
-            (println (str arg ": unrecognized option"))
-            (doseq [c (gen/generator (parser/parser (lexer/lexer in)))]
-              (println (code/instruction c))))))
+        (= arg "-t")
+          (doseq [t (lexer/lexer in)]
+            (println (token/canonical t)))
+        (= arg "-p")
+          (println (ast/typeset (parser/parser (lexer/lexer in))))
+        (= arg "-o")
+          (doseq [c (opt/optimizer (gen/generator (parser/parser (lexer/lexer in))))]
+            (println (code/instruction c)))
+        (nil? arg)
+          (doseq [c (gen/generator (parser/parser (lexer/lexer in)))]
+            (println (code/instruction c)))
+        :else
+          (println (str arg ": unrecognized option"))))
     (catch Exception e
       (println (.getMessage e)))))
