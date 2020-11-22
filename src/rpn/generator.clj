@@ -14,6 +14,7 @@
 ;;; limitations under the License.
 ;;;
 (ns rpn.generator
+  "Code generator."
   (:require [rpn.ast :as ast])
   (:require [rpn.code :as code]))
 
@@ -46,5 +47,8 @@
           (let [[cs syms] (generate (ast :right) (generate (ast :left) state))]
             [(conj cs (operator-codes k)) syms])))))
 
-(defn generator [ast]
+(defn generator
+  "A code generator that transforms a syntax tree into a sequence of unoptimized
+  instructions."
+  [ast]
   (generate ast))
