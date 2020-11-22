@@ -51,7 +51,7 @@
             (println "  Binds optional sequence of sym/val pairs prior to evaluation.")
             (println "  -s  print symbols"))
         (= arg "-s")
-          (for [s (code/symbols (loader/loader in))]
+          (doseq [s (code/symbols (loader/loader in))]
             (println s))
         (or (nil? arg) (not= (first arg) \-))
           (let [syms (bind args)]
