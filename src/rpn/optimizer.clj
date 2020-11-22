@@ -14,6 +14,7 @@
 ;;; limitations under the License.
 ;;;
 (ns rpn.optimizer
+  "Optimizer."
   (:require [rpn.code :as code])
   (:require [rpn.evaluator :as evaluator]))
 
@@ -51,7 +52,7 @@
       [0 []] codes)
     (#(seq (last %)))))
 
-(defn- combine-dynamic-operators-revisions [codes]
+(defn- combine-operators-revisions [codes]
   (->>
     (reduce
       (fn [state code]
@@ -82,10 +83,61 @@
       [0 nil {}] codes)
     (#(last %))))
 
-(defn- combine-dynamic-operators [codes]
-  (revise codes (combine-dynamic-operators-revisions codes)))
+(defn combine-operators
+  "An optimization that combines a series of identical operations as they appear in the
+  original source.
 
-(defn- flatten-dynamic-operators-revisions [codes]
+  Consider the following input: `x + y + z`
+  
+  The parser generates an AST that first evaluates `x + y`, then evaluates the result of
+  that expression and `z`. The corresponding bytecode follows:
+  ```
+  push x
+  push y
+  add 2
+  push z
+  add 2
+  ```
+  
+  The `add 2` instruction tells the interpreter to pop `2` elements from the evaluation
+  stack, compute the sum, and push the result onto the stack. Since the `add` instruction
+  can operate on any number of arguments, both `add` operations can be combined into a
+  single instruction:
+  ```
+  push x
+  push y
+  push z
+  add 3
+  ```
+  
+  A slightly more complicated example illustrates the same principle. Consider the input,
+  `a + (b * c) + d`, and the corresponding bytecode:
+  ```
+  push a
+  push b
+  push c
+  mul 2
+  add 2
+  push d
+  add 2
+  ```
+  
+  Similar to the first scenario, both `add` operations can be combined even though the
+  intervening expression `b * c` exists. Note that adjacency of instructions is not
+  relevant, but rather the equivalence of the evaluation stack frame depth. In other
+  words, all operations of the same type at the same frame can be combined into a single
+  operation.
+  
+  The algorithm works by simulating execution using an evaluation stack, maintaining a
+  set of instructions that are candidates for elimination. If another instruction at the
+  same frame depth is encountered, the original instruction is replaced with a `nop` and
+  the current instruction modified to evaluate additional elements on the stack. Once
+  all instructions have been evaluated, the set of revisions are applied, resulting in
+  a new sequence of instructions."
+  [codes]
+  (revise codes (combine-operators-revisions codes)))
+
+(defn- flatten-operators-revisions [codes]
   (->>
     (reduce
       (fn [state code]
@@ -102,21 +154,75 @@
       [0 nil {}] codes)
     (#(last %))))
 
-(defn- flatten-dynamic-operators [codes]
-  (revise codes (flatten-dynamic-operators-revisions codes)))
+(defn flatten-operators
+  "An optimization that flattens identical operations adjacent to each other in the
+  instruction sequence.
+  
+  This optimization is similar to [[combine-operators]] in that operations are
+  essentially combined, but instead it looks for special cases in which identical operations
+  occur in adjacent frames on the evaluation stack.
+  
+  Consider the input, `x * (y * z)`, and the corresponding bytecode:
+  ```
+  push x
+  push y
+  push z
+  mul 2
+  mul 2
+  ```
+  
+  Note that both `mul` instructions occur in adjacent positions. At first glance, it may
+  appear as though [[combine-operators]] would eliminate one of the operations, but
+  each occurs at a different frame on the evaluation stack.
+  
+  The intuition behind this optimization is that the first `mul 2` would push its result
+  onto the stack, only to be removed for evaluation by the second `mul 2` instruction. So,
+  rather than performing an intermediate calculation, the first can be eliminated in lieu of
+  a single `mul 3` instruction. In general, any number of adjacent identical instructions
+  can be reduced to a single instruction.
+  
+  One may notice that this phase optimizes right-to-left evaluation scenarios, but only for
+  those operators with the associative property, i.e. evaluation can be left-to-right or
+  right-to-left. This becomes more clear with another example: `a * (b * (c * d))`.
+  The original instruction sequence follows:
+  ```
+  push a
+  push b
+  push c
+  push d
+  mul 2
+  mul 2
+  mul 2
+  ```
+  
+  In essence, the parentheses are being removed and evaluated in a left-to-right manner
+  by eliminating all but the last `mul` instruction:
+  ```
+  push a
+  push b
+  push c
+  push d
+  mul 4
+  ```
+  
+  The algorithm works by stepping through each associative operator instruction, finding
+  adjacent identical pairs, and eliminating all but the final instruction, which is then
+  modified to reflect the combined number of arguments."
+  [codes]
+  (revise codes (flatten-operators-revisions codes)))
 
-(defn- analyze
+(defn- evaluate-literals-revisions
   ([codes]
-    (analyze 0 codes ()))
+    (evaluate-literals-revisions 0 codes ()))
   ([pos codes stack]
     (let [c (first codes)]
       (cond
         (code/declare-symbol-code? c)
-          (analyze (inc pos) (rest codes) stack)
+          (recur (inc pos) (rest codes) stack)
         (code/push-symbol-code? c)
-          (analyze (inc pos) (rest codes) (cons nil stack))
+          (recur (inc pos) (rest codes) (cons nil stack))
         (code/push-code? c)
-          (analyze (inc pos) (rest codes) (cons {:pos pos :value (c :value)} stack))
+          (recur (inc pos) (rest codes) (cons {:pos pos :value (c :value)} stack))
         (code/operator? c)
           (->>
             [(let [nums (filter some? (reverse (take (c :argn) stack)))]
@@ -141,26 +247,80 @@
               (cons nil (drop (c :argn) stack))]
             (#(let [[revs stack] %]
                 (if (empty? revs)
-                  (analyze (inc pos) (rest codes) stack)
+                  (evaluate-literals-revisions (inc pos) (rest codes) stack)
                   revs))))
         (nil? c)
           {}
         :else
-          (analyze (inc pos) (rest codes) stack)))))
+          (recur (inc pos) (rest codes) stack)))))
 
-(defn- evaluate-literal-expressions [codes]
-  (let [revs (analyze codes)]
+(defn evaluate-literals
+  "An optimization that evaluates literal expressions.
+  
+  This optimization finds expressions containing only literal values and reduces them to a
+  single value, thereby eliminating the need for the interpreter to perform the computation.
+
+  Consider the input, `x + 1 + y + 2`, which produces the following sequence of
+  unoptimized instructions:
+  ```
+  push x
+  push 1
+  add 2
+  push y
+  add 2
+  push 2
+  add 2
+  ```
+  
+  Applying the [[combine-operators]] optimization produces the following:
+  ```
+  push x
+  push 1
+  push y
+  push 2
+  add 4
+  ```
+  
+  In either case, there is still opportunity to further optimize. Had the original input
+  been written as `x + y + 1 + 2`, it becomes more clear that `1 + 2` could be replaced
+  with `3`. The purpose of this optimization phase is to find such expressions and reduce
+  them to a single value.
+
+  In the latter optimized case above, applying this optimization reduces the instruction
+  sequence to the following:
+  ```
+  push x
+  push y
+  push 3
+  add 3
+  ```
+  
+  The algorithm works by simulating execution of the instruction sequence using an evaluation
+  stack, though recording only literal values. As operations are encountered, the optimizer
+  peeks into the evaluation stack to determine if two or more literals are present, and if so,
+  eliminates the `push` instruction corresponding to each literal in lieu of a single `push`.
+  When an optimization is detected, the evaluation terminates and revisions are applied to
+  the original sequence of instructions. This process repeats itself until a complete
+  evaluation yields no new optimizations.
+  
+  Note that an expression consisting entirely of literals will always be reduced to a single
+  `push` instruction containing the computed value."
+  [codes]
+  (let [revs (evaluate-literals-revisions codes)]
     (if (empty? revs)
       codes
       (recur (revise codes revs)))))
 
 (def ^:private optimizations
   (comp
-    evaluate-literal-expressions
-    flatten-dynamic-operators
-    combine-dynamic-operators))
+    evaluate-literals
+    flatten-operators
+    combine-operators))
 
-(defn optimizer [codes]
+(defn optimizer
+  "An optimizer that transforms a sequence of instructions into another sequence of
+  instructions."
+  [codes]
   (let [cs (optimizations codes)]
     (if (< (count cs) (count codes))
       (recur cs)
