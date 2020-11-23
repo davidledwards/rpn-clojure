@@ -31,7 +31,7 @@
       (cond
         (= arg "-h")
           (do
-            (println "usage: rpnc [options")
+            (println "usage: rpnc [options]")
             (println "  Compile expression from stdin and emit instructions to stdout.")
             (println "  -t tokenize only")
             (println "  -p parse only")
