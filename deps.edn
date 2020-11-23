@@ -1,14 +1,14 @@
 {
-  :paths ["src" "test"]
+  :paths ["src"]
   :deps {
     org.clojure/clojure {:mvn/version "1.10.1"}
   }
   :aliases {
     :rpnc {
-      :main-opts ["-m rpn.compiler"]
+      :main-opts ["-m" "rpn.compiler"]
     }
     :rpn {
-      :main-opts ["-m rpn.interpreter"]
+      :main-opts ["-m" "rpn.interpreter"]
     }
     :run-tests {
       :extra-paths ["test"]
@@ -23,6 +23,12 @@
     :gen-tests {
       :extra-paths ["test"]
       :main-opts ["-m" "rpn.tools"]
+    }
+    :package {
+      :replace-deps {
+        uberdeps/uberdeps {:mvn/version "1.0.2"}
+      }
+      :main-opts ["-m" "uberdeps.uberjar"]
     }
   }
 }
