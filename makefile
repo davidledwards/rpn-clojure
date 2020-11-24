@@ -14,7 +14,8 @@
 # limitations under the License.
 #
 VERSION=0.1
-ROOT_NAME=rpn-${VERSION}
+PROJECT=rpn-clojure
+TARGET=${PROJECT}-${VERSION}
 BASE_DIR=$(abspath .)
 
 MAIN_SOURCES=$(wildcard ${BASE_DIR}/src/rpn/*.clj)
@@ -22,14 +23,14 @@ TEST_SOURCES=$(wildcard ${BASE_DIR}/test/rpn/*.clj)
 SHELL_SOURCES=${wildcard ${BASE_DIR}/src/shell/*}
 ALL_SOURCES=${MAIN_SOURCES} ${TEST_SOURCES} ${SHELL_SOURCES}
 
-BUILD_DIR=$(abspath ${BASE_DIR}/build)
-BUILD_JAR=${BUILD_DIR}/${ROOT_NAME}.jar
+BUILD_DIR=${BASE_DIR}/build
+BUILD_JAR=${BUILD_DIR}/${TARGET}.jar
 
-STAGE_DIR=${BUILD_DIR}/${ROOT_NAME}
+STAGE_DIR=${BUILD_DIR}/${TARGET}
 
-PACKAGE_TAR_FILE=${ROOT_NAME}.tar.gz
+PACKAGE_TAR_FILE=${TARGET}.tar.gz
 PACKAGE_TAR=${BUILD_DIR}/${PACKAGE_TAR_FILE}
-PACKAGE_ZIP_FILE=${ROOT_NAME}.zip
+PACKAGE_ZIP_FILE=${TARGET}.zip
 PACKAGE_ZIP=${BUILD_DIR}/${PACKAGE_ZIP_FILE}
 
 help:
@@ -54,12 +55,12 @@ ${PACKAGE_TAR}: ${BUILD_JAR} ${SHELL_SOURCES}
 	mkdir -p ${STAGE_DIR}/lib
 	cp ${BUILD_JAR} ${STAGE_DIR}/lib
 	cp ${SHELL_SOURCES} ${STAGE_DIR}
-	tar czf $@ -C ${BUILD_DIR} ${ROOT_NAME}
+	tar czf $@ -C ${BUILD_DIR} ${TARGET}
 
 ${PACKAGE_ZIP}: ${BUILD_DIR} ${SHELL_SOURCES}
 	mkdir -p ${STAGE_DIR}/lib
 	cp ${BUILD_JAR} ${STAGE_DIR}/lib
 	cp ${SHELL_SOURCES} ${STAGE_DIR}
-	(cd ${BUILD_DIR} && zip -r ${PACKAGE_ZIP_FILE} ${ROOT_NAME})
+	(cd ${BUILD_DIR} && zip -r ${PACKAGE_ZIP_FILE} ${TARGET})
 
 package: ${PACKAGE_TAR} ${PACKAGE_ZIP}

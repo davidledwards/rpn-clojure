@@ -13,14 +13,14 @@ The distributable artifacts for this project are built using [make](https://www.
 Unpacking either assembly produces a directory structure with the following format:
 
 ```text
-rpn-<version>/
+rpn-clojure-<version>/
 + rpnc
 + rpn
 + lib/
   ...
 ```
 
-For convenience, you might place `rpn-<version>/rpnc` and `rpn-<version>/rpn` in your `PATH` or create an alias.
+For convenience, you might place `rpn-clojure-<version>/rpnc` and `rpn-clojure-<version>/rpn` in your `PATH` or create an alias.
 
 ## License
 
