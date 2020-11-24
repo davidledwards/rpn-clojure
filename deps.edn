@@ -10,7 +10,7 @@
     :rpn {
       :main-opts ["-m" "rpn.interpreter"]
     }
-    :run-tests {
+    :test {
       :extra-paths ["test"]
       :extra-deps {
         com.cognitect/test-runner {
@@ -20,15 +20,15 @@
       }
       :main-opts ["-m" "cognitect.test-runner"]
     }
+    :build {
+      :replace-deps {
+        uberdeps/uberdeps {:mvn/version "1.0.3"}
+      }
+      :main-opts ["-m" "uberdeps.uberjar"]
+    }
     :gen-tests {
       :extra-paths ["test"]
       :main-opts ["-m" "rpn.tools"]
-    }
-    :package {
-      :replace-deps {
-        uberdeps/uberdeps {:mvn/version "1.0.2"}
-      }
-      :main-opts ["-m" "uberdeps.uberjar"]
     }
   }
 }
