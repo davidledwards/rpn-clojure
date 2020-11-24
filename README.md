@@ -8,7 +8,19 @@ TODO
 
 ## Building
 
-TODO
+The distributable artifacts for this project are built using [make](https://www.gnu.org/software/make/), which delegates most of its work to [Clojure CLI Tools](https://clojure.org/guides/getting_started#_clojure_installer_and_cli_tools). After installing `make` and `clojure`, clone the repository and issue the command `make all` in the root directory of the project. This produces two distributions under the subdirectory `build` named `rpn-clojure-<version>.tar.gz` and `rpn-clojure-<version>.zip`.
+
+Unpacking either assembly produces a directory structure with the following format:
+
+```text
+rpn-<version>/
++ rpnc
++ rpn
++ lib/
+  ...
+```
+
+For convenience, you might place `rpn-<version>/rpnc` and `rpn-<version>/rpn` in your `PATH` or create an alias.
 
 ## License
 
