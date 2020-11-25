@@ -4,7 +4,15 @@ A Clojure implementation of the RPN compiler and interpreter. See the original [
 
 ## Comments
 
-TODO
+I used the [Scala version](https://github.com/davidledwards/rpn) as the point of reference when porting to Clojure primarily because it was a bit closer to a pure functional experience when compared to the [Kotlin port](https://github.com/davidledwards/rpn-kotlin). Retrospectively, I find Scala a bit easier to read than Kotlin despite that it feels like a much heavier language.
+
+Learning Clojure was enjoyable and brought back memories of my days experimenting with Lisp more than 25 years ago. I was a bit fascinated with Lisp during the early part of my career and even decided to write my own interpreter. Even though the interpreter was quite simple at the time, it was sophisticated enough to build some interesting monitoring applications for middleware and system management software I had been developing at the time.
+
+I have mixed feelings about Clojure...
+
+On one hand, the simplicity and power of the language makes it feel natural in expressing problems in a functional way. There is virtually no ceremony required in doing things that often come with strongly-typed languages. Everything is just a simple expression. As an example, part of the porting exercise was turning a Java input stream into a lazy sequence of characters. While much more complicated in the Kotlin port, it was incredibly simple with Clojure.
+
+On the other hand, I found myself fighting the lack of a type system and the strict enforcement of such types that I came to expect from compiled languages. A compiler can eliminate so many classes of problems that simply cannot be discovered in Clojure until runtime or unless more extensive tests are written. Some of that struggle can be attributed to the unfamiliarity of a new language, but nonetheless, I realized the appeal of strong typing and what the compiler can do for you. For large-scale systems, I would almost certainly opt for a strongly-typed compiled language.
 
 ## Building
 
